@@ -1,19 +1,21 @@
 "use client";
 
 import axios from "axios";
+import { useCallback, useState } from "react";
+import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 
 import Input from "./Input";
 import Button from "./Button";
 import { toast } from "react-hot-toast";
-import { useCallback, useState } from "react";
-import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
-import { useRouter } from "next/navigation";
+
 type Variant = "LOGIN" | "REGISTER";
 
 const AuthForm = () => {
+  const router = useRouter();
   const [variant, setVariant] = useState<Variant>("LOGIN");
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+
   const toggleVariant = useCallback(() => {
     if (variant === "LOGIN") {
       setVariant("REGISTER");
@@ -22,40 +24,43 @@ const AuthForm = () => {
     }
   }, [variant]);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<FieldValues>({
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
-  const onSubmit: SubmitHandler<FieldValues> = (data) => {
+  const onSubmit = () => {
+    const data = {
+      username,
+      password,
+    };
     setIsLoading(true);
 
     if (variant === "REGISTER") {
       axios
         .post("http://localhost:5000/auth/signup", data)
-        .then(() => {
-          toast.success("Account created successfully!");
-          router.push("/home");
+        .then((callback) => {
+          if (callback?.data?.error) {
+            toast.error("Invalid credentials!");
+          }
+
+          if (callback?.data?.ok) {
+            toast.success("Account created successfully!");
+            router.push("/home");
+          }
         })
-        .catch(() => toast.error("Something went wrong!"))
         .finally(() => setIsLoading(false));
     }
 
     if (variant === "LOGIN") {
-      axios
-        .post("http://localhost:5000/auth/signin", data)
-        .then(() => {
+      axios.post("http://localhost:5000/auth/signin", data).then((callback) => {
+        if (callback?.data?.error) {
+          toast.error("Invalid credentials!");
+        }
+
+        if (callback?.data?.ok) {
           toast.success("Logged in successfully!");
           router.push("/home");
-        })
-        .catch(() => toast.error("Something went wrong!"))
-        .finally(() => setIsLoading(false));
+        }
+      });
     }
   };
 
@@ -71,34 +76,16 @@ const AuthForm = () => {
           sm:px-10
         "
       >
-        <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          {variant === "REGISTER" && (
-            <Input
-              disabled={isLoading}
-              register={register}
-              errors={errors}
-              required
-              id="name"
-              label="Name"
-            />
-          )}
-          <Input
-            disabled={isLoading}
-            register={register}
-            errors={errors}
-            required
-            id="email"
-            label="Email address"
+        <form className="space-y-6" onSubmit={onSubmit}>
+          <input
             type="email"
+            onChange={(e) => setUsername(e.target.value)}
+            className="text-black"
           />
-          <Input
-            disabled={isLoading}
-            register={register}
-            errors={errors}
-            required
-            id="password"
-            label="Password"
+          <input
             type="password"
+            onChange={(e) => setPassword(e.target.value)}
+            className="text-black"
           />
           <div>
             <Button disabled={isLoading} fullWidth type="submit">
@@ -106,7 +93,6 @@ const AuthForm = () => {
             </Button>
           </div>
         </form>
-
         <div
           className="
             flex 

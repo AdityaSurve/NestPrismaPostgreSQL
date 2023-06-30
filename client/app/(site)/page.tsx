@@ -1,4 +1,3 @@
-import Image from "next/image";
 import AuthForm from "./components/AuthForm";
 
 const Auth = () => {
@@ -6,7 +5,7 @@ const Auth = () => {
     <div
       className="
         flex 
-        min-h-full 
+        min-h-screen
         flex-col 
         justify-center 
         py-12 
